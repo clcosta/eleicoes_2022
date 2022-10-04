@@ -2,10 +2,11 @@ import requests
 import json
 import pandas as pd
 from datetime import datetime
-from rocketry import Rocketry
-from rocketry.conds import every
+from dash import Dash, html, dcc
+from dash.dependencies import Input, Output
+import plotly.express as px
 
-scheduler = Rocketry(execution="async")
+app = Dash(__name__)
 
 def resultado_do_tse():
     try:
@@ -33,11 +34,40 @@ def resultado_do_tse():
     ])
     return df_eleicao
 
-@scheduler.task(every('30 seconds'), execution="async")
-def mostrar_resultado_no_terminal():
-    df_eleicao = resultado_do_tse()
-    print(f"\nResultado às: {datetime.now().strftime('%H:%M:%S')}\n", "*"*50)
-    print(df_eleicao)
+def grafico_pizza():
+    df = resultado_do_tse()
+    fig = px.pie(df,names='Candidato', values='Nº de Votos')
+    return fig
+
+def hora_atual():
+    return datetime.now().strftime('%H:%M:%S')
+
+def layout():
+    return html.Div(
+        children=[
+            html.H1("Eleições 2022 em tempo Real"),
+            html.Legend(children=[f"Última atualização às: ",html.B(f"{hora_atual()}")], id="atualizacao"),
+            dcc.Graph('grafico-eleicoes', figure=grafico_pizza()),
+            html.Button('Atualizar', id="btn-update", n_clicks=0)
+        ]
+    )
+
+app.layout = layout
+
+@app.callback(
+    Output("grafico-eleicoes", 'figure'),
+    Input('btn-update', 'n_clicks')
+)
+def atualizar_grafico(click):
+    "Atualizado às: "
+    return grafico_pizza()
+
+@app.callback(
+    Output("atualizacao", 'children'),
+    Input('btn-update', 'n_clicks')
+)
+def atualizar_legend(click):
+    return [f"Última atualização às: ",html.B(f"{hora_atual()}")]
 
 if __name__ == '__main__':
-    scheduler.run()
+    app.run_server(debug=True)
