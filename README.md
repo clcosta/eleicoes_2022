@@ -4,7 +4,7 @@
 
 - [x] Atualizar o gráfico pelo front.
 - [ ] Criar uma forma de atualização por poolling.
-- [ ] Criar diferentes tipos de gráficos.
+- [x] Criar diferentes tipos de gráficos.
 
 ### Créditos iniciais:
 
